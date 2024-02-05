@@ -43,6 +43,8 @@ dependencies {
             'org.assertj:assertj-core:3.2.0',
             'org.slf4j:slf4j-jdk14:1.7.25'
     )
+
+    implementation group: 'com.fasterxml.jackson.core', name: 'jackson-databind', version: '2.16.1'
 }
 
 ext.isReleaseVersion = !version.endsWith("SNAPSHOT")

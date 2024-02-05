@@ -1,5 +1,8 @@
 package com.taskadapter.redmineapi.internal;
 
+import com.fasterxml.jackson.core.JsonProcessingException;
+import com.fasterxml.jackson.core.type.TypeReference;
+import com.fasterxml.jackson.databind.ObjectMapper;
 import com.taskadapter.redmineapi.NotFoundException;
 import com.taskadapter.redmineapi.RedmineAuthenticationException;
 import com.taskadapter.redmineapi.RedmineException;
@@ -520,8 +523,32 @@ public final class Transport {
 		List<RequestParam> paramsList = new ArrayList<>(newParams);
 		final URI uri = getURIConfigurator().getObjectsURI(objectClass, paramsList);
 		final HttpGet http = new HttpGet(uri);
-		final String response = send(http);
+		String response = send(http);
+
+		// Fix: org.json.JSONException: Duplicate key "possible_values"
+		if(objectClass.equals(CustomFieldDefinition.class)) {
+			response = removeDuplicateKey(response);	
+		}
+
 		return RedmineJSONParser.getResponse(response);
+	}
+
+	public String removeDuplicateKey(String response) {
+
+		if (response.contains("possible_values")) {
+			ObjectMapper mapper = new ObjectMapper();
+
+			try {
+				TypeReference<HashMap<String, Object>> typeRef = new TypeReference<HashMap<String, Object>>() {
+				};
+				Map<String, Object> map = mapper.readValue(response, typeRef);
+				response = mapper.writeValueAsString(map);
+			} catch (JsonProcessingException e) {
+				e.printStackTrace();
+			}
+		}
+
+		return response;
 	}
 
 	public <T> List<T> getChildEntries(Class<?> parentClass, int parentId, Class<T> classs) throws RedmineException {
